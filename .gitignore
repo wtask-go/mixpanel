@@ -1,3 +1,12 @@
+.idea/
+.vscode/
+.history/
+vendor/
+
+# Debug binaries
+debug
+*debug_bin
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -11,5 +20,6 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-# Dependency directories (remove the comment below to include it)
-# vendor/
+go.sum
+go.sum*.tmp
+go.mod*.tmp
