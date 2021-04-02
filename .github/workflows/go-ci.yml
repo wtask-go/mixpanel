@@ -21,10 +21,12 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      - name: Go environment
-        uses: cedrickring/golang-action@1.7.0
-        with:
-          args: go env
+#       - name: Go environment
+#         uses: cedrickring/golang-action@1.7.0
+#         with:
+#           args: go env
           
       - name: Go version
-        run: go version
+        run: |
+          go env
+          go version
