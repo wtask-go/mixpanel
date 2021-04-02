@@ -1,4 +1,4 @@
-name: Go CI
+name: Golang CI
 
 # Controls when the action will run. 
 on:
@@ -13,13 +13,13 @@ on:
 
 jobs:
   golang:
+    name: "Golang"
     runs-on: ubuntu-latest
     env:
       GO111MODULE: "on"
 
     steps:
-      - name: setup
-        uses: actions/setup-go@v2
+      - uses: actions/setup-go@v2
         with:
           go-version: "~1.16.3"
 
@@ -28,3 +28,11 @@ jobs:
           
       - run: go env
       - run: go version
+  
+  version:
+    name: "Version" 
+    runs-on: ubuntu-latest
+    steps:
+      - run: go env
+      - run: go version
+    
