@@ -1,4 +1,6 @@
 name: Go CI
+env:
+  GO111MODULE: "on"
 
 # Controls when the action will run. 
 on:
@@ -18,14 +20,11 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-      - uses: cedrickring/golang-action@1.7.0
-        env:
-          GO111MODULE: "on"
 
-      - name: Environment
-        run: |
-          go env
-          go version
+      - name: Go environment
+        uses: cedrickring/golang-action@1.7.0
+        with:
+          args: go env
           
-#         with: 
-#           args: go env
+      - name: Go version
+        run: go version
