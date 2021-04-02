@@ -11,28 +11,34 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+# Runs in parallel except job have 'needs' key to wait another job was completed 
 jobs:
   golang:
-    name: "Golang"
+    name: "Go toolchain"
     runs-on: ubuntu-latest
-    env:
-      GO111MODULE: "on"
 
     steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
       - uses: actions/setup-go@v2
         with:
           go-version: "~1.16.3"
-
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-          
-      - run: go env
-      - run: go version
-  
-  version:
-    name: "Version" 
-    runs-on: ubuntu-latest
-    steps:
+      - run: go env -w GO111MODULE=on
       - run: go env
       - run: go version
     
+      - uses: golangci/golangci-lint-action@v2.5.1
+        with:
+          # version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
+#           version: # optional
+          # golangci-lint command line arguments
+          args: run --sort-results
+          # golangci-lint working directory, default is project root
+#           working-directory: # optional
+          # if set to true and the action runs on a pull request - the action outputs only newly found issues
+          skip-go-installation: true 
+          # if set to true then the action don't cache or restore ~/go/pkg.
+          skip-pkg-cache: true
+          # if set to true then the action don't cache or restore ~/.cache/go-build.
+          skip-build-cache: true
