@@ -42,3 +42,5 @@ jobs:
           skip-pkg-cache: true
           # if set to true then the action don't cache or restore ~/.cache/go-build.
           skip-build-cache: true
+
+      - run: make test
