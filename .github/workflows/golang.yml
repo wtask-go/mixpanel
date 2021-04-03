@@ -1,17 +1,17 @@
 name: Golang CI
 
-# Controls when the action will run. 
+# Controls when the action will run.
 on:
   # Triggers the workflow on push or pull request events but only for the main branch
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# Runs in parallel except job have 'needs' key to wait another job was completed 
+# Runs in parallel except job have 'needs' key to wait another job was completed
 jobs:
   golang:
     name: "Go toolchain"
@@ -27,17 +27,17 @@ jobs:
       - run: go env -w GO111MODULE=on
       - run: go env
       - run: go version
-    
+
       - uses: golangci/golangci-lint-action@v2.5.1
         with:
           # version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
-#           version: # optional
+          # version: # optional
           # golangci-lint command line arguments
-          args: --sort-results
+          # args: --sort-results
           # golangci-lint working directory, default is project root
-#           working-directory: # optional
+          # working-directory: # optional
           # if set to true and the action runs on a pull request - the action outputs only newly found issues
-          skip-go-installation: true 
+          skip-go-installation: true
           # if set to true then the action don't cache or restore ~/go/pkg.
           skip-pkg-cache: true
           # if set to true then the action don't cache or restore ~/.cache/go-build.
