@@ -13,8 +13,8 @@ on:
 
 # Runs in parallel except job have 'needs' key to wait another job was completed
 jobs:
-  golang:
-    name: "Go toolchain"
+  test:
+    name: "Testing"
     runs-on: ubuntu-latest
 
     steps:
@@ -27,6 +27,8 @@ jobs:
       - run: go env -w GO111MODULE=on
       - run: go env
       - run: go version
+
+      - run: go mod download
 
       - uses: golangci/golangci-lint-action@v2.5.1
         with:
