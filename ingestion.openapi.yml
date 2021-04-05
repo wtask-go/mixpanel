@@ -15,12 +15,30 @@ servers:
     description: Standard Server
 
 tags:
-  - name: Track recent event
+  - name: Track
     description: |
       Track an event by providing an event name and event properties.
       The track endpoint will not accept requests with a time property older than 5 days.
     externalDocs:
       url: https://developer.mixpanel.com/reference/events#track-event
+  - name: Track and Deduplicate
+    description: |
+      Event deduplication allows a project to send the same exact event while only recording that event once.
+      Deduplication only occurs when a subset of the event data is exactly identical.
+    externalDocs:
+      url: https://developer.mixpanel.com/reference/events#track-and-deduplicate-event
+  - name: Track multiple
+    description: |
+      Import a batch of events into Mixpanel for all users.
+      Instead of sending a single JSON object as the data query parameter,
+      send a JSON list of up to 50 objects as the data parameter of
+      an `application/x-www-form-urlencoded` POST or GET request body.
+
+      When sending a batch request to Mixpanel, we will accept the request and return a `1` status
+      if at least one of the events is valid. In this case, invalid events are dropped.
+      If no events are valid, then a `0` status will be returned.
+    externalDocs:
+      url: https://developer.mixpanel.com/reference/events#track-events-in-batch
 
 components:
   schemas:
@@ -80,8 +98,8 @@ components:
             If present, Mixpanel will return a `content-type: text/javascript` with a body that calls a function
             by value provided. This is useful for creating local callbacks to a successful track call in JavaScript.
 
-    response-status:
-      title: Response status flag
+    response-status-flag:
+      title: Response status value
       type: integer
       minimum: 0
       maximum: 1
@@ -92,10 +110,11 @@ components:
 
     verbose-response:
       type: object
-      title: Verbose JSON response
+      title: Verbose response
+      description: Verbose response on demand.
       properties:
         status:
-          $ref: "#/components/schemas/response-status"
+          $ref: "#/components/schemas/response-status-flag"
         error:
           type: string
           description: Error description if the request wasn't successful.
@@ -114,9 +133,9 @@ components:
 paths:
   /track#live-event:
     post:
-      summary: Track recent event data with Mixpanel
+      summary: Track recent event.
       tags:
-        - Track recent event
+        - Track
       operationId: TrackEvent
       requestBody:
         required: true
@@ -130,8 +149,7 @@ paths:
           content:
             text/plain:
               schema:
-                # type: integer
-                $ref: "#/components/schemas/response-status"
+                $ref: "#/components/schemas/response-status-flag"
             application/json:
               schema:
                 $ref: "#/components/schemas/verbose-response"
@@ -149,17 +167,90 @@ paths:
                 $ref: "#/components/schemas/error-response"
 
   /track#live-event-deduplicate:
-    description: Track Event with Deduplication
-    summary: |
-      Event deduplication allows a project to send the same exact event while only recording that event once.
     post:
-      operationId: TrackLiveEventDeduplicate
+      summary: Track recent event with deduplication.
+      tags:
+        - Track and Deduplicate
+      operationId: TrackDeduplicateEvent
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/event-form"
       responses:
         "200":
           description: OK
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/response-status-flag"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/verbose-response"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error-response"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error-response"
 
   /track#past-events-batch:
-    description: Track Multiple Events
-    summary: |
-      Import a batch of events into Mixpanel for all users.
-      Instead of sending a single JSON object as the data query parameter, send a JSON list of up to 50 objects.
+    post:
+      summary: Track multiple events at once.
+      tags:
+        - Track multiple
+      operationId: TrackMultipleEvents
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              title: Track multiple events form data
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/event-object"
+                  maxItems: 50
+                verbose:
+                  type: integer
+                  format: int32
+                  minimum: 0
+                  maximum: 1
+                  description: |
+                    If present and equal to 1, Mixpanel will respond with a JSON Object describing the success
+                    or failure of the tracking call. The returned object will have two keys: `status`,
+                    with the value 1 on success and 0 on failure, and `error`,
+                    with a string-valued error message if the request wasn't successful.
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/response-status-flag"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/verbose-response"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error-response"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error-response"
