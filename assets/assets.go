@@ -2,11 +2,11 @@
 package assets
 
 import (
-	_ "embed" // required to be anonymous until embed.FS will be used
+	"embed"
 )
 
-// Embedded asset content
 var (
-	//go:embed event.schema.json
-	EventSchemaJSON []byte
+	// FS represents filesystem with embedded files
+	//go:embed openapi
+	FS embed.FS
 )

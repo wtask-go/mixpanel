@@ -45,7 +45,7 @@ components:
     event-object:
       type: object
       encoding: application/json
-      $ref: "./assets/event.schema.json"
+      $ref: "./event.schema.json"
       description: |
         A JSON object as a string representing the event being tracked.
         Event is the name of the event being tracked and is a required property.
