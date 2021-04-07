@@ -5,8 +5,6 @@ import (
 	"embed"
 )
 
-var (
-	// FS represents filesystem with embedded files
-	//go:embed openapi
-	FS embed.FS
-)
+// FS represents filesystem with embedded files
+//go:embed openapi
+var FS embed.FS

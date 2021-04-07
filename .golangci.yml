@@ -130,7 +130,8 @@ linters-settings:
     # run `go tool vet help` to see all analyzers
     enable: []
     enable-all: true
-    disable: []
+    disable:
+      - fieldalignment
     disable-all: false
 
   ifshort:
@@ -297,6 +298,11 @@ issues:
 
   # Excluding configuration per-path, per-linter, per-text and per-source
   exclude-rules:
+    # Exclude some linters from running on tests files.
+    - path: _test\.go
+      linters:
+        - funlen
+
     - linters:
         - lll
       source: "^//go:generate "
