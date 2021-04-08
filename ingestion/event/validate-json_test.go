@@ -52,6 +52,15 @@ func TestValidateJSON(t *testing.T) {
 				}},
 			true, // all require fields are present
 		},
+		{
+			map[string]interface{}{
+				"event": "",
+				"properties": map[string]interface{}{
+					"token": "",
+					"time":  "10:31",
+				}},
+			false, // invalid time value
+		},
 		{&event.Data{}, true}, // required are present (but are empty)
 		{&event.Data{
 			Properties: event.Properties{
