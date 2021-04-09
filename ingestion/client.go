@@ -106,7 +106,7 @@ func WithUserAgent(agent string) ClientOption {
 }
 
 func (c *client) Track(ctx context.Context, data *event.Data) error {
-	req, err := c.NewTrackRequest(data)
+	req, err := c.makeTrackRequest(data)
 	if err != nil {
 		return err
 	}
@@ -120,7 +120,7 @@ func (c *client) Track(ctx context.Context, data *event.Data) error {
 }
 
 func (c *client) TrackDeduplicate(ctx context.Context, data *event.Data) error {
-	req, err := c.NewTrackDeduplicateRequest(data)
+	req, err := c.makeTrackDeduplicateRequest(data)
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (c *client) TrackDeduplicate(ctx context.Context, data *event.Data) error {
 }
 
 func (c *client) TrackBatch(ctx context.Context, data []event.Data) error {
-	req, err := c.NewBatchRequest(data)
+	req, err := c.makeBatchRequest(data)
 	if err != nil {
 		return err
 	}

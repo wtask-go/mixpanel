@@ -10,7 +10,7 @@ import (
 	"github.com/wtask-go/mixpanel/ingestion/internal/form"
 )
 
-func (c *client) NewTrackRequest(data *event.Data) (*http.Request, error) {
+func (c *client) makeTrackRequest(data *event.Data) (*http.Request, error) {
 	body, err := form.NewValues(
 		data,
 		form.WithVerboseResponse(true),
@@ -29,7 +29,7 @@ func (c *client) NewTrackRequest(data *event.Data) (*http.Request, error) {
 	return req, nil
 }
 
-func (c *client) NewTrackDeduplicateRequest(data *event.Data) (*http.Request, error) {
+func (c *client) makeTrackDeduplicateRequest(data *event.Data) (*http.Request, error) {
 	body, err := form.NewValues(
 		data,
 		form.WithVerboseResponse(true),
@@ -48,7 +48,7 @@ func (c *client) NewTrackDeduplicateRequest(data *event.Data) (*http.Request, er
 	return req, nil
 }
 
-func (c *client) NewBatchRequest(data []event.Data) (*http.Request, error) {
+func (c *client) makeBatchRequest(data []event.Data) (*http.Request, error) {
 	body, err := form.NewBatchValues(
 		data,
 		form.WithVerboseResponse(true),
