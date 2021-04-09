@@ -303,6 +303,7 @@ issues:
       linters:
         - funlen
         - goerr113
+        - gocognit
 
     - linters:
         - lll

@@ -116,7 +116,7 @@ func (c *client) Track(ctx context.Context, data *event.Data) error {
 		return err
 	}
 
-	return c.parseTrackResponse(resp)
+	return c.parseResponse(resp)
 }
 
 func (c *client) TrackDeduplicate(ctx context.Context, data *event.Data) error {
@@ -130,7 +130,7 @@ func (c *client) TrackDeduplicate(ctx context.Context, data *event.Data) error {
 		return err
 	}
 
-	return c.parseTrackResponse(resp)
+	return c.parseResponse(resp)
 }
 
 func (c *client) TrackBatch(ctx context.Context, data []event.Data) error {
@@ -144,9 +144,5 @@ func (c *client) TrackBatch(ctx context.Context, data []event.Data) error {
 		return err
 	}
 
-	return c.parseTrackResponse(resp)
-}
-
-func (c *client) parseTrackResponse(resp *http.Response) error {
-	return nil
+	return c.parseResponse(resp)
 }
