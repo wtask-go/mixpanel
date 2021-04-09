@@ -103,7 +103,7 @@ func WithRedirectResponse(redirect string) OptionalValue {
 		if redirect != "" {
 			values.Set("redirect", redirect)
 			values.Del("image")
-			values.Del("calback")
+			values.Del("callback")
 		} else {
 			values.Del("redirect")
 		}
