@@ -1,4 +1,4 @@
-description := "Mixpanel API client"
+description := "Mixpanel API clients"
 linter := $$(golangci-lint version)
 
 .PHONY: all
