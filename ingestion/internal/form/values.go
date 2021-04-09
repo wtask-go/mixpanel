@@ -9,7 +9,7 @@ import (
 	"github.com/wtask-go/mixpanel/ingestion/event"
 )
 
-// MaxBatchLength is Mixpanel limitation to track events batch.
+// MaxBatchLength is Mixpanel limitation for events batch.
 const MaxBatchLength = 50
 
 // OptionalValue is intended to pass not mandatory request values.
@@ -31,7 +31,7 @@ func makeValues(data string, optional ...OptionalValue) (*url.Values, error) {
 	return values, nil
 }
 
-// NewValues builds request values required to track single event.
+// NewValues builds form values required to track single event.
 func NewValues(data *event.Data, optional ...OptionalValue) (*url.Values, error) {
 	if data == nil {
 		return nil, fmt.Errorf("%w: event data is nil", errs.ErrInvalidArgument)
@@ -45,7 +45,7 @@ func NewValues(data *event.Data, optional ...OptionalValue) (*url.Values, error)
 	return makeValues(string(encoded), optional...)
 }
 
-// NewBatchValues builds request values required to track batch events.
+// NewBatchValues builds form values required to track batch events.
 func NewBatchValues(data []event.Data, optional ...OptionalValue) (*url.Values, error) {
 	switch l := len(data); {
 	case l == 0:

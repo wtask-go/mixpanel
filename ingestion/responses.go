@@ -14,7 +14,7 @@ import (
 
 func (*client) parseResponse(resp *http.Response) error {
 	if resp == nil {
-		return fmt.Errorf("%w: nil http response value", errs.ErrInvalidArgument)
+		return fmt.Errorf("%w: http response is nil", errs.ErrInvalidArgument)
 	}
 
 	var (
@@ -112,7 +112,7 @@ func parseJSONError(body io.ReadCloser) error {
 	}
 
 	content := struct {
-		Status string `json:"status"` // most likely "error" always
+		Status string `json:"status"` // most likely status value is "error" always
 		Error  string `json:"error"`
 	}{}
 	if err := json.Unmarshal(data, &content); err != nil {

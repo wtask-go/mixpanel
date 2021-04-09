@@ -50,7 +50,7 @@ func compileSpecification() *openapi3.Swagger {
 	return oapi
 }
 
-// urlencodedBodyDecoder required by `kin-openapi` to decode custom url-encoded form.
+// urlencodedBodyDecoder is required for `kin-openapi` to decode custom urlencoded form.
 func urlencodedBodyDecoder(
 	body io.Reader,
 	_ http.Header,

@@ -1,3 +1,4 @@
+// Package ingestion contains client to interact with Mixpanel Ingestion API.
 package ingestion
 
 import (

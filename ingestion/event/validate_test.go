@@ -50,7 +50,7 @@ func TestValidateJSON(t *testing.T) {
 				"properties": map[string]interface{}{
 					"token": "",
 				}},
-			true, // all require fields are present
+			true, // all required fields are present
 		},
 		{
 			map[string]interface{}{
@@ -68,7 +68,7 @@ func TestValidateJSON(t *testing.T) {
 					"user": "John Smith",
 				},
 			},
-		}, true}, // required Event and Properties.Token are absent
+		}, true}, // required Event and Properties.Token fields have zero-values (present)
 		{&event.Data{
 			Properties: event.Properties{
 				IP:    "127:0:1:1",
