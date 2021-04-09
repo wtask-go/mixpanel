@@ -112,7 +112,7 @@ func parseJSONError(body io.ReadCloser) error {
 	}
 
 	content := struct {
-		Status string `json:"status"` // most likely status value is "error" always 
+		Status string `json:"status"` // most likely status value is "error" always
 		Error  string `json:"error"`
 	}{}
 	if err := json.Unmarshal(data, &content); err != nil {
