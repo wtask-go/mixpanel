@@ -13,7 +13,7 @@ import (
 	"github.com/wtask-go/mixpanel/ingestion/event"
 )
 
-// HTTPDoer represent HTTP client interface only required for th package.
+// HTTPDoer represent HTTP client interface only required for this package.
 type HTTPDoer interface {
 	Do(*http.Request) (*http.Response, error)
 }
