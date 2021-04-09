@@ -1,0 +1,255 @@
+openapi: "3.0.2"
+
+info:
+  title: Mixpanel Ingestion API
+  version: "1.0"
+
+externalDocs:
+  url: https://developer.mixpanel.com/reference/ingestion-api
+  description: Check Events section to explore Mixpanel Ingestion API endpoints.
+
+servers:
+  - url: https://api-eu.mixpanel.com
+    description: EU Residency Server
+  - url: https://api.mixpanel.com
+    description: Standard Server
+
+tags:
+  - name: Track
+    description: |
+      Track an event by providing an event name and event properties.
+      The track endpoint will not accept requests with a time property older than 5 days.
+    externalDocs:
+      url: https://developer.mixpanel.com/reference/events#track-event
+  - name: Track and Deduplicate
+    description: |
+      Event deduplication allows a project to send the same exact event while only recording that event once.
+      Deduplication only occurs when a subset of the event data is exactly identical.
+    externalDocs:
+      url: https://developer.mixpanel.com/reference/events#track-and-deduplicate-event
+  - name: Track multiple
+    description: |
+      Import a batch of events into Mixpanel for all users.
+      Instead of sending a single JSON object as the data query parameter,
+      send a JSON list of up to 50 objects as the data parameter of
+      an `application/x-www-form-urlencoded` POST or GET request body.
+
+      When sending a batch request to Mixpanel, we will accept the request and return a `1` status
+      if at least one of the events is valid. In this case, invalid events are dropped.
+      If no events are valid, then a `0` status will be returned.
+    externalDocs:
+      url: https://developer.mixpanel.com/reference/events#track-events-in-batch
+
+components:
+  schemas:
+    event-object:
+      contentType: application/json
+      $ref: "./event.schema.json"
+      description: |
+        A JSON object as a string representing the event being tracked.
+        Event is the name of the event being tracked and is a required property.
+        Check Mixpanel Event Schema.
+
+    event-form:
+      title: Track Event form data
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: "#/components/schemas/event-object"
+        ip:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 1
+          description: |
+            If present and equal to 1, Mixpanel will use the ip address of the incoming request
+            as a distinct_id if none is provided.
+            This is different from providing a `properties.ip` value in the Event Object.
+        verbose:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 1
+          description: |
+            If present and equal to 1, Mixpanel will respond with a JSON Object describing the success
+            or failure of the tracking call. The returned object will have two keys: `status`,
+            with the value 1 on success and 0 on failure, and `error`,
+            with a string-valued error message if the request wasn't successful.
+        redirect:
+          type: string
+          description: |
+            If present, Mixpanel will serve a redirect to the given url as a response to the request.
+            This is useful to add link tracking in notifications.
+        img:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 1
+          description: |
+            If present and equal to 1, Mixpanel will serve a 1x1 transparent pixel image as a response to the request.
+            This is useful for adding [Pixel Tracking](https://en.wikipedia.org/wiki/Web_beacon)
+            in places that javascript is not supported.
+        callback:
+          type: string
+          description: |
+            If present, Mixpanel will return a `content-type: text/javascript` with a body that calls a function
+            by value provided. This is useful for creating local callbacks to a successful track call in JavaScript.
+
+    response-status-flag:
+      title: Response status value
+      type: integer
+      minimum: 0
+      maximum: 1
+      description: |
+        The value `1` indicates all data objects provided are valid.
+        This does not signify a valid project token or secret.
+        The value `0` indicates one or more data objects in the body are invalid.
+
+    verbose-response:
+      type: object
+      title: Verbose response
+      description: Verbose response on demand.
+      properties:
+        status:
+          $ref: "#/components/schemas/response-status-flag"
+        error:
+          type: string
+          description: Error description if the request wasn't successful.
+
+    error-response:
+      type: object
+      title: Error response object
+      properties:
+        status:
+          type: string
+          description: Response status value.
+        error:
+          type: string
+          description: Response error description.
+
+paths:
+  /track#live-event:
+    post:
+      summary: Track recent event.
+      tags:
+        - Track
+      operationId: TrackEvent
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/event-form"
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/response-status-flag"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/verbose-response"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error-response"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error-response"
+
+  /track#live-event-deduplicate:
+    post:
+      summary: Track recent event with deduplication.
+      tags:
+        - Track and Deduplicate
+      operationId: TrackDeduplicateEvent
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/event-form"
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/response-status-flag"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/verbose-response"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error-response"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error-response"
+
+  /track#past-events-batch:
+    post:
+      summary: Track multiple events at once.
+      tags:
+        - Track multiple
+      operationId: TrackMultipleEvents
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              title: Track multiple events form data
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/event-object"
+                  maxItems: 50
+                verbose:
+                  type: integer
+                  format: int32
+                  minimum: 0
+                  maximum: 1
+                  description: |
+                    If present and equal to 1, Mixpanel will respond with a JSON Object describing the success
+                    or failure of the tracking call. The returned object will have two keys: `status`,
+                    with the value 1 on success and 0 on failure, and `error`,
+                    with a string-valued error message if the request wasn't successful.
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/response-status-flag"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/verbose-response"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error-response"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error-response"

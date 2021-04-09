@@ -1,0 +1,105 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "title": "Mixpanel Event Schema",
+    "description": "Events describe actions that take place within your product. An event contains properties that describe the action.",
+    "examples": [
+        {
+            "event": "Played Song",
+            "properties": {
+                "token": "6972694d809c7390676a138834f8c890",
+                "time": 1601412131,
+                "ip": "203.0.113.9",
+                "$insert_id": "5d958f87-542d-4c10-9422-0ed75893dc81",
+                "distinct_id": "john.doe@gmail.com",
+                "artist": "Drake",
+                "song": "Laugh Now Cry Later"
+            }
+        }
+    ],
+    "required": [
+        "event"
+    ],
+    "properties": {
+        "event": {
+            "type": "string",
+            "title": "Event name",
+            "description": "The name of the action to track",
+            "examples": [
+                "Played Song"
+            ]
+        },
+        "properties": {
+            "type": "object",
+            "title": "Event properties",
+            "description": "A dictionary of properties to hold metadata about your event",
+            "examples": [
+                {
+                    "token": "6972694d809c7390676a138834f8c890",
+                    "time": 1601412131,
+                    "ip": "203.0.113.9",
+                    "$insert_id": "5d958f87-542d-4c10-9422-0ed75893dc81",
+                    "distinct_id": "john.doe@spotify.com",
+                    "artist": "Drake",
+                    "song": "Laugh Now Cry Later"
+                }
+            ],
+            "required": [
+                "token"
+            ],
+            "properties": {
+                "token": {
+                    "type": "string",
+                    "title": "Project token",
+                    "description": "The Mixpanel token associated with your project. You can find your Mixpanel token in the project settings dialog in the Mixpanel app. Events without a valid token will be ignored.",
+                    "examples": [
+                        "6972694d809c7390676a138834f8c890"
+                    ]
+                },
+                "time": {
+                    "type": "integer",
+                    "title": "Event time",
+                    "description": "The time that this event occurred. If present, the value should be a unix timestamp (seconds since midnight, January 1st, 1970 - UTC). If this property is not included in your request, Mixpanel will use the time the event arrives at the server. If you're using our mobile SDKs, it will be set automatically for you.",
+                    "examples": [
+                        1601412131
+                    ]
+                },
+                "ip": {
+                    "type": "string",
+                    "title": "Client IP Address",
+                    "description": "An IP address string (e.g. \"127.0.0.1\") associated with the event. This is used for adding geolocation data to events, and should only be required if you are making requests from your backend. If ip is absent (and ip=1 is not provided as a URL parameter), Mixpanel will ignore the IP address of the request.",
+                    "examples": [
+                        "203.0.113.9",
+                        "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+                    ],
+                    "oneOf": [
+                        {
+                            "format": "ipv4"
+                        },
+                        {
+                            "format": "ipv6"
+                        }
+                    ]
+                },
+                "$insert_id": {
+                    "type": "string",
+                    "title": "Insert ID",
+                    "description": "A random 36 character string of hyphenated alphanumeric characters that is unique to an event. Hyphen (-) is optional. $insert_id can contain less than 36 characters, but any string longer than 36 characters will be truncated. If an $insert_id contains non-alphanumeric or non-hyphen characters then Mixpanel replaces it with a random alphanumeric value.",
+                    "examples": [
+                        "5d958f87-542d-4c10-9422-0ed75893dc81"
+                    ]
+                },
+                "distinct_id": {
+                    "type": "string",
+                    "title": "Distinct ID",
+                    "description": "The value of distinct_id will be treated as a string, and used to uniquely identify a user associated with your event. If you provide a distinct_id property with your events, you can track a given user through funnels and distinguish unique users for retention analyses. You should always send the same distinct_id when an event is triggered by the same user.",
+                    "examples": [
+                        "john.doe@gmail.com"
+                    ]
+                }
+            },
+            "additionalProperties": true
+        }
+    },
+    "additionalProperties": false
+}
