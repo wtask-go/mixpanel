@@ -34,7 +34,8 @@ func compileSpecification() *openapi3.Swagger {
 		if url.String() == "./event.schema.json" {
 			return assets.FS.ReadFile("openapi/event.schema.json")
 		}
-		return nil, nil
+
+		return nil, fmt.Errorf("not found: %s", url.String())
 	}
 
 	oapi, err := loader.LoadSwaggerFromData(spec)
@@ -125,8 +126,11 @@ func (mock RequestCollector) Do(req *http.Request) (*http.Response, error) {
 }
 
 func OpenAPIRequestValidator(t *testing.T, router routers.Router) RequestCollector {
+	t.Helper()
+
 	return func(req *http.Request) (*http.Response, error) {
-		// router is helper to traverse compiled OpenAPI schema
+		// router is helper to traverse compiled OpenAPI document
+		// to find schema corresponded to request
 		route, params, err := router.FindRoute(req)
 		if err != nil {
 			t.Fatalf("OpenAPI router failed: %s", err)
