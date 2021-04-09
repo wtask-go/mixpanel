@@ -3,7 +3,7 @@ package assets_test
 import (
 	"testing"
 
-	"github.com/wtask-go/mixpanel/assets"
+	"github.com/wtask-go/mixpanel/internal/assets"
 )
 
 func TestFS_embedded(t *testing.T) {
@@ -13,7 +13,7 @@ func TestFS_embedded(t *testing.T) {
 		// If not, dir will be checked is not empty.
 		"openapi": {
 			"event.schema.json",
-			"ingestion.yml",
+			"ingestion.openapi.yml",
 		},
 	}
 	for dir, files := range embeds {

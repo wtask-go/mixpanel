@@ -11,8 +11,12 @@ import (
 
 	"github.com/wtask-go/mixpanel/errs"
 	"github.com/wtask-go/mixpanel/ingestion/event"
-	"github.com/wtask-go/mixpanel/ingestion/internal/request"
 )
+
+// HTTPDoer represent HTTP client interface only required for th package.
+type HTTPDoer interface {
+	Do(*http.Request) (*http.Response, error)
+}
 
 // Client represents top-level interface of Mixpanel Ingestion API
 type Client interface {
@@ -27,7 +31,7 @@ type client struct {
 		deduplicate *url.URL
 		batch       *url.URL
 	}
-	httpc *http.Client
+	httpc HTTPDoer
 	agent string
 }
 
@@ -48,13 +52,16 @@ func NewClient(serverURL string, options ...ClientOption) (Client, error) {
 
 	cli := &client{}
 	cli.endpoint.live = server.ResolveReference(&url.URL{
-		Path: "/track#live-event",
+		Path:     "/track",
+		Fragment: "live-event",
 	})
 	cli.endpoint.deduplicate = server.ResolveReference(&url.URL{
-		Path: "/track#live-event-deduplicate",
+		Path:     "/track",
+		Fragment: "live-event-deduplicate",
 	})
 	cli.endpoint.batch = server.ResolveReference(&url.URL{
-		Path: "/track#past-events-batch",
+		Path:     "/track",
+		Fragment: "past-events-batch",
 	})
 	cli.httpc = &http.Client{
 		Transport: &http.Transport{
@@ -64,7 +71,7 @@ func NewClient(serverURL string, options ...ClientOption) (Client, error) {
 		},
 	}
 	cli.agent = fmt.Sprintf(
-		"ingestion.Client/v*.*.* (%s; %s; %s;)", runtime.GOOS, runtime.GOARCH, runtime.Version(),
+		"ingestion.Client/v* (%s; %s; %s;)", runtime.GOOS, runtime.GOARCH, runtime.Version(),
 	)
 
 	for _, option := range options {
@@ -76,14 +83,14 @@ func NewClient(serverURL string, options ...ClientOption) (Client, error) {
 	return cli, nil
 }
 
-// WithHTTPClient allows to change default internal HTTP client with specified one.
-func WithHTTPClient(httpc *http.Client) ClientOption {
+// WithHTTPDoer allows to change default internal HTTP client with specified one.
+func WithHTTPDoer(doer HTTPDoer) ClientOption {
 	return func(c *client) error {
-		if httpc == nil {
-			return fmt.Errorf("%w: http client is nil", errs.ErrInvalidArgument)
+		if doer == nil {
+			return fmt.Errorf("%w: http doer is nil", errs.ErrInvalidArgument)
 		}
 
-		c.httpc = httpc
+		c.httpc = doer
 
 		return nil
 	}
@@ -99,22 +106,12 @@ func WithUserAgent(agent string) ClientOption {
 }
 
 func (c *client) Track(ctx context.Context, data *event.Data) error {
-	body, err := request.NewValues(
-		data,
-		request.WithVerboseResponse(true),
-	)
+	req, err := c.NewTrackRequest(data)
 	if err != nil {
 		return err
 	}
 
-	req, err := request.NewPostFormURLEncoded(ctx, c.endpoint.live.String(), body)
-	if err != nil {
-		return err
-	}
-
-	c.addDefaultHeaders(req)
-
-	resp, err := c.httpc.Do(req)
+	resp, err := c.httpc.Do(req.WithContext(ctx))
 	if err != nil {
 		return err
 	}
@@ -123,22 +120,12 @@ func (c *client) Track(ctx context.Context, data *event.Data) error {
 }
 
 func (c *client) TrackDeduplicate(ctx context.Context, data *event.Data) error {
-	body, err := request.NewValues(
-		data,
-		request.WithVerboseResponse(true),
-	)
+	req, err := c.NewTrackDeduplicateRequest(data)
 	if err != nil {
 		return err
 	}
 
-	req, err := request.NewPostFormURLEncoded(ctx, c.endpoint.deduplicate.String(), body)
-	if err != nil {
-		return err
-	}
-
-	c.addDefaultHeaders(req)
-
-	resp, err := c.httpc.Do(req)
+	resp, err := c.httpc.Do(req.WithContext(ctx))
 	if err != nil {
 		return err
 	}
@@ -147,36 +134,17 @@ func (c *client) TrackDeduplicate(ctx context.Context, data *event.Data) error {
 }
 
 func (c *client) TrackBatch(ctx context.Context, data []event.Data) error {
-	body, err := request.NewBatchValues(
-		data,
-		request.WithVerboseResponse(true),
-	)
+	req, err := c.NewBatchRequest(data)
 	if err != nil {
 		return err
 	}
 
-	req, err := request.NewPostFormURLEncoded(ctx, c.endpoint.deduplicate.String(), body)
-	if err != nil {
-		return err
-	}
-
-	c.addDefaultHeaders(req)
-
-	resp, err := c.httpc.Do(req)
+	resp, err := c.httpc.Do(req.WithContext(ctx))
 	if err != nil {
 		return err
 	}
 
 	return c.parseTrackResponse(resp)
-}
-
-func (c *client) addDefaultHeaders(req *http.Request) {
-	req.Header.Add("Accept", "plain/text")
-	req.Header.Add("Accept", "application/json")
-
-	if c.agent != "" {
-		req.Header.Set("User-Agent", c.agent)
-	}
 }
 
 func (c *client) parseTrackResponse(resp *http.Response) error {

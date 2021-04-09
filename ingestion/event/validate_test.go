@@ -68,7 +68,7 @@ func TestValidateJSON(t *testing.T) {
 					"user": "John Smith",
 				},
 			},
-		}, true}, // required Event and Token are empty
+		}, true}, // required Event and Properties.Token are absent
 		{&event.Data{
 			Properties: event.Properties{
 				IP:    "127:0:1:1",
@@ -91,6 +91,7 @@ func TestValidateJSON(t *testing.T) {
 			},
 		}, true},
 	}
+
 	for i, c := range cases {
 		data, err := json.Marshal(c.data)
 		if err != nil {

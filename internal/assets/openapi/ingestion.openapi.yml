@@ -43,8 +43,7 @@ tags:
 components:
   schemas:
     event-object:
-      type: object
-      encoding: application/json
+      contentType: application/json
       $ref: "./event.schema.json"
       description: |
         A JSON object as a string representing the event being tracked.

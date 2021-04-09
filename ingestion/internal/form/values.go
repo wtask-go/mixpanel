@@ -1,4 +1,4 @@
-package request
+package form
 
 import (
 	"encoding/json"
@@ -12,9 +12,10 @@ import (
 // MaxBatchLength is Mixpanel limitation to track events batch.
 const MaxBatchLength = 50
 
-// OptionalValue is intended to pass not mandatory values.
+// OptionalValue is intended to pass not mandatory request values.
 type OptionalValue func(*url.Values)
 
+// makeValues builds url.Values with required `data` item.
 func makeValues(data string, optional ...OptionalValue) (*url.Values, error) {
 	if data == "" {
 		return nil, fmt.Errorf("%w: data is empty", errs.ErrInvalidArgument)
@@ -96,12 +97,15 @@ func WithIPAsDistinctID(ip bool) OptionalValue {
 
 // WithRedirectResponse builds option to pass redirection URL.
 // As result Mixpanel will serve redirect as a response to the request.
+// Option works like OneOf between redirect, image, callback.
 func WithRedirectResponse(redirect string) OptionalValue {
 	return func(values *url.Values) {
-		if redirect == "" {
-			values.Del("redirect")
-		} else {
+		if redirect != "" {
 			values.Set("redirect", redirect)
+			values.Del("image")
+			values.Del("calback")
+		} else {
+			values.Del("redirect")
 		}
 	}
 }
@@ -109,10 +113,13 @@ func WithRedirectResponse(redirect string) OptionalValue {
 // WithImageResponse builds option to pass image flag.
 // As result Mixpanel will serve 1x1 transparent image as a response to the request.
 // Expected content type is `image/png`.
+// Option works like OneOf between redirect, image, callback.
 func WithImageResponse(image bool) OptionalValue {
 	return func(values *url.Values) {
 		if image {
 			values.Set("image", "1")
+			values.Del("redirect")
+			values.Del("callback")
 		} else {
 			values.Del("image")
 		}
@@ -122,10 +129,13 @@ func WithImageResponse(image bool) OptionalValue {
 // WithJavascriptCallback builds option to pass javascript callback value.
 // As result Mixpanel will return a content-type: `text/javascript`
 // with a body that calls a function by value provided.
+// Option works like OneOf between redirect, image, callback.
 func WithJavascriptCallback(callback string) OptionalValue {
 	return func(values *url.Values) {
 		if callback != "" {
 			values.Set("callback", callback)
+			values.Del("redirect")
+			values.Del("image")
 		} else {
 			values.Del("callback")
 		}
