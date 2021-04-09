@@ -102,6 +102,13 @@ func urlencodedBodyDecoder(
 			}
 
 			obj[name] = raw
+		case "array":
+			raw := []interface{}{}
+			if err := json.Unmarshal([]byte(values.Get(name)), &raw); err != nil {
+				return err, fmt.Errorf("invalid array: %w", err)
+			}
+
+			obj[name] = raw
 		case "integer":
 			v, err := strconv.ParseFloat(values.Get(name), 64)
 			if err != nil {

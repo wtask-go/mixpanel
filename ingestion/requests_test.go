@@ -18,7 +18,7 @@ func init() {
 	openapi3.DefineIPv6Format()
 }
 
-func Test_client_openapi_requests(t *testing.T) {
+func Test_Client_openapi_requests(t *testing.T) {
 	openapi3filter.RegisterBodyDecoder("application/x-www-form-urlencoded", urlencodedBodyDecoder)
 
 	router, err := legacy.NewRouter(spec)
@@ -58,6 +58,22 @@ func Test_client_openapi_requests(t *testing.T) {
 			Time:       time.Now(),
 			CustomProperties: event.CustomProperties{
 				"role": "manager",
+			},
+		},
+	})
+
+	_ = cli.TrackBatch(context.Background(), []event.Data{
+		{
+			Event: "outdated-1",
+			Properties: event.Properties{
+				InsertID:   "uuid",
+				Token:      "token",
+				DistinctID: "account@server.com",
+				IP:         "127.0.0.1",
+				Time:       time.Now(),
+				CustomProperties: event.CustomProperties{
+					"role": "manager",
+				},
 			},
 		},
 	})
