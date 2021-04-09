@@ -119,13 +119,13 @@ func urlencodedBodyDecoder(
 	return obj, nil
 }
 
-type RequestCollector func(*http.Request) (*http.Response, error)
+type HTTPDoerMock func(*http.Request) (*http.Response, error)
 
-func (mock RequestCollector) Do(req *http.Request) (*http.Response, error) {
+func (mock HTTPDoerMock) Do(req *http.Request) (*http.Response, error) {
 	return mock(req)
 }
 
-func OpenAPIRequestValidator(t *testing.T, router routers.Router) RequestCollector {
+func OpenAPIRequestValidator(t *testing.T, router routers.Router) HTTPDoerMock {
 	t.Helper()
 
 	return func(req *http.Request) (*http.Response, error) {
