@@ -8,8 +8,8 @@ MixPanel API clients for Go
 
 ## Dependencies
 
-* github.com/santhosh-tekuri/jsonschema/v3 -- for Ingestion API Event validation
-* github.com/getkin/kin-openapi -- for requests validation against OpenAPI v3 specification
+* [github.com/santhosh-tekuri/jsonschema](https://github.com/santhosh-tekuri/jsonschema) -- for Ingestion API Event validation
+* [github.com/getkin/kin-openapi](https://github.com/getkin/kin-openapi) -- for requests validation against OpenAPI v3 specification
 
 ## Ingestion API
 
