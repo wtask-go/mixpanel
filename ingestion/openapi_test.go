@@ -98,21 +98,21 @@ func urlencodedBodyDecoder(
 		case "object":
 			raw := map[string]interface{}{}
 			if err := json.Unmarshal([]byte(values.Get(name)), &raw); err != nil {
-				return err, fmt.Errorf("invalid object: %w", err)
+				return err, fmt.Errorf("invalid object %s: %w", name, err)
 			}
 
 			obj[name] = raw
 		case "array":
 			raw := []interface{}{}
 			if err := json.Unmarshal([]byte(values.Get(name)), &raw); err != nil {
-				return err, fmt.Errorf("invalid array: %w", err)
+				return err, fmt.Errorf("invalid array %s: %w", name, err)
 			}
 
 			obj[name] = raw
 		case "integer":
 			v, err := strconv.ParseFloat(values.Get(name), 64)
 			if err != nil {
-				return nil, fmt.Errorf("invalid integer %s: %w", values.Get(name), err)
+				return nil, fmt.Errorf("invalid integer %s (%s): %w", name, values.Get(name), err)
 			}
 
 			obj[name] = v
