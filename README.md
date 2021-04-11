@@ -1,6 +1,6 @@
-# mixpanel
+# Mixpanel
 
-MixPanel API clients for Go
+Mixpanel API clients for Go
 
 ## Requirements
 
