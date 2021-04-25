@@ -68,7 +68,7 @@ linters-settings:
     statements: 40
 
   gocognit:
-    min-complexity: 20
+    min-complexity: 25
 
   goconst:
     min-len: 3
@@ -116,7 +116,7 @@ linters-settings:
         skipRecvDeref: true
 
   gocyclo:
-    min-complexity: 20
+    min-complexity: 25
 
   gofmt:
     simplify: true
@@ -240,7 +240,6 @@ linters:
     - gocognit
     - goconst
     - gocritic
-    - goerr113
     - gofmt
     - golint
     - goprintffuncname
