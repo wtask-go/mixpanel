@@ -109,3 +109,70 @@ func (p *Properties) MarshalJSON() ([]byte, error) {
 
 	return json.Marshal(obj)
 }
+
+// UnmarshalJSON implements json.Unmarshaler interface.
+// nolint:funlen // it is required parse raw data
+func (p *Properties) UnmarshalJSON(raw []byte) error {
+	if p == nil {
+		return fmt.Errorf("unmarshal event.Properties to nil")
+	}
+
+	data := map[string]json.RawMessage{}
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return err
+	}
+
+	unmarshal := func(key string, target interface{}) error {
+		if v, ok := data[key]; ok {
+			if err := json.Unmarshal(v, target); err != nil {
+				return err
+			}
+
+			delete(data, key)
+		}
+
+		return nil
+	}
+
+	if err := unmarshal("$insert_id", &p.InsertID); err != nil {
+		return err
+	}
+
+	if err := unmarshal("distinct_id", &p.DistinctID); err != nil {
+		return err
+	}
+
+	if err := unmarshal("ip", &p.IP); err != nil {
+		return err
+	}
+
+	var unix int64
+	if err := unmarshal("time", &unix); err != nil {
+		return err
+	}
+
+	if unix != 0 {
+		p.Time = time.Unix(unix, 0).UTC()
+	}
+
+	if err := unmarshal("token", &p.Token); err != nil {
+		return err
+	}
+
+	if len(data) > 0 {
+		if p.CustomProperties == nil {
+			p.CustomProperties = CustomProperties{}
+		}
+
+		for k, v := range data {
+			var c interface{}
+			if err := json.Unmarshal(v, &c); err != nil {
+				return err
+			}
+
+			p.CustomProperties[k] = c
+		}
+	}
+
+	return nil
+}
