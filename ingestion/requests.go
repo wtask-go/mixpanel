@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/wtask-go/mixpanel/ingestion/event"
+	"github.com/wtask-go/mixpanel/ingestion/profile"
 	"github.com/wtask-go/mixpanel/internal/form"
 )
 
@@ -17,7 +18,7 @@ func (c *client) makeTrackRequest(data *event.Data) (*http.Request, error) {
 		return nil, err
 	}
 
-	return makeFormURLEncodedPost(c.endpoint.live.String(), body)
+	return makeFormURLEncodedPost(c.endpoint.track.live.String(), body)
 }
 
 func (c *client) makeTrackDeduplicateRequest(data *event.Data) (*http.Request, error) {
@@ -26,32 +27,10 @@ func (c *client) makeTrackDeduplicateRequest(data *event.Data) (*http.Request, e
 		return nil, err
 	}
 
-	return makeFormURLEncodedPost(c.endpoint.deduplicate.String(), body)
+	return makeFormURLEncodedPost(c.endpoint.track.deduplicate.String(), body)
 }
 
-func (c *client) makeBatchRequest(data []*event.Data) (*http.Request, error) {
-	body, err := makeEventBatchForm(data, form.WithVerboseResponse(true))
-	if err != nil {
-		return nil, err
-	}
-
-	return makeFormURLEncodedPost(c.endpoint.batch.String(), body)
-}
-
-func makeEventForm(obj *event.Data, options ...form.OptionalValue) (*url.Values, error) {
-	if obj == nil {
-		return nil, fmt.Errorf("event object is nil")
-	}
-
-	data, err := json.Marshal(obj)
-	if err != nil {
-		return nil, err
-	}
-
-	return form.NewValues(data, options...)
-}
-
-func makeEventBatchForm(batch []*event.Data, options ...form.OptionalValue) (*url.Values, error) {
+func (c *client) makeTrackBatchRequest(batch []*event.Data) (*http.Request, error) {
 	switch l := len(batch); {
 	case l == 0:
 		return nil, fmt.Errorf("events batch is empty")
@@ -60,6 +39,77 @@ func makeEventBatchForm(batch []*event.Data, options ...form.OptionalValue) (*ur
 	}
 
 	data, err := json.Marshal(batch)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := form.NewValues(data, form.WithVerboseResponse(true))
+	if err != nil {
+		return nil, err
+	}
+
+	return makeFormURLEncodedPost(c.endpoint.track.batch.String(), body)
+}
+
+func (c *client) makeEngageRequest(action profile.Mutator) (*http.Request, error) {
+	var url string
+
+	switch action.(type) {
+	default:
+		return nil, fmt.Errorf("unsupported engage action type %T", action)
+	case nil:
+		return nil, fmt.Errorf("engage action is nil")
+	case *profile.Set:
+		url = c.endpoint.engage.set.String()
+	case *profile.SetOnce:
+		url = c.endpoint.engage.setOnce.String()
+	case *profile.NumberAdd:
+		url = c.endpoint.engage.add.String()
+	case *profile.ListAppend:
+		url = c.endpoint.engage.append.String()
+	case *profile.ListRemove:
+		url = c.endpoint.engage.remove.String()
+	case *profile.Unset:
+		url = c.endpoint.engage.unset.String()
+	}
+
+	data, err := json.Marshal(action)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := form.NewValues(data, form.WithVerboseResponse(true))
+	if err != nil {
+		return nil, err
+	}
+
+	return makeFormURLEncodedPost(url, body)
+}
+
+func (c *client) makeEngageBatchRequest(batch []profile.Mutator) (*http.Request, error) {
+	if len(batch) == 0 {
+		return nil, fmt.Errorf("empty profiles batch")
+	}
+
+	data, err := json.Marshal(batch)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := form.NewValues(data, form.WithVerboseResponse(true))
+	if err != nil {
+		return nil, err
+	}
+
+	return makeFormURLEncodedPost(c.endpoint.engage.batch.String(), body)
+}
+
+func makeEventForm(obj *event.Data, options ...form.OptionalValue) (*url.Values, error) {
+	if obj == nil {
+		return nil, fmt.Errorf("event object is nil")
+	}
+
+	data, err := json.Marshal(obj)
 	if err != nil {
 		return nil, err
 	}
