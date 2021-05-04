@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/wtask-go/mixpanel/ingestion/event"
-	"github.com/wtask-go/mixpanel/ingestion/internal/form"
+	"github.com/wtask-go/mixpanel/internal/form"
 )
 
 func (c *client) makeTrackRequest(data *event.Data) (*http.Request, error) {

@@ -14,6 +14,7 @@ func TestFS_embedded(t *testing.T) {
 		"openapi": {
 			"event.schema.json",
 			"ingestion.openapi.yml",
+			"engage.schema.json",
 		},
 	}
 	for dir, files := range embeds {
@@ -42,5 +43,26 @@ func TestFS_embedded(t *testing.T) {
 		case len(entries) == 0:
 			t.Fatalf("%q have no entries", dir)
 		}
+	}
+}
+
+func TestMustCompileSchema(t *testing.T) {
+	schemas := []string{
+		"openapi/event.schema.json",
+		"openapi/engage.schema.json",
+	}
+
+	for _, asset := range schemas {
+		schema := assets.MustCompileSchema(asset)
+		if schema == nil {
+			t.Fatal("required schema is nil", asset)
+		}
+	}
+}
+
+func TestMustCompileIngestionSpecification(t *testing.T) {
+	spec := assets.MustCompileIngestionSpecification()
+	if spec == nil {
+		t.Fatal("required Ingestion OpenAPI specification is nil")
 	}
 }

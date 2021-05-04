@@ -19,3 +19,14 @@ Our client offers top-level interface to interact with Mixpanel endpoints.
 We use semi-official json schema of Event object in tests to validate prepared event data. Check [this page in docs](https://developer.mixpanel.com/docs/data-model#anatomy-of-an-event) for the [schema link](https://gist.github.com/jbwyme/f01f0a6f6f8b8db2472cb8771f7a505c).
 
 Also we made own [OpenAPI schema](./internal/assets/ingestion.openapi.yml) to describe external Mixpanel Ingestion API. The module uses mentioned schema to validate prepared HTTP requests in tests only.
+
+### Ingestion API events
+
+* Track Event: `ingestion.Client.Track()`
+* Track Event with Deduplication: `ingestion.Client.TrackDeduplicate()`
+* Track Multiple Events: `ingestion.Client.TrackBatch()`
+
+### Ingestion API User Profiles
+
+* Set Property, Set Property Once, Increment Numerical Property, Append to List Property, Remove from List Property, Delete Property: `ingestion.Client.Engage()`
+* Update Multiple Profiles: `ingestion.Client.EngageBatch()`

@@ -10,6 +10,7 @@ import (
 	"github.com/getkin/kin-openapi/routers/legacy"
 	"github.com/wtask-go/mixpanel/ingestion"
 	"github.com/wtask-go/mixpanel/ingestion/event"
+	"github.com/wtask-go/mixpanel/internal/assets"
 )
 
 func init() {
@@ -21,7 +22,9 @@ func init() {
 func Test_Client_openapi_requests(t *testing.T) {
 	openapi3filter.RegisterBodyDecoder("application/x-www-form-urlencoded", urlencodedBodyDecoder)
 
-	router, err := legacy.NewRouter(spec)
+	router, err := legacy.NewRouter(
+		assets.MustCompileIngestionSpecification(),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}

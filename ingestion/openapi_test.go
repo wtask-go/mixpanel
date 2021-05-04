@@ -16,39 +16,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers"
-	"github.com/wtask-go/mixpanel/internal/assets"
 )
-
-var spec = compileSpecification()
-
-func compileSpecification() *openapi3.Swagger {
-	spec, err := assets.FS.ReadFile("openapi/ingestion.openapi.yml")
-	if err != nil {
-		panic(err)
-	}
-
-	loader := openapi3.NewSwaggerLoader()
-	loader.Context = context.Background()
-	loader.IsExternalRefsAllowed = true
-	loader.ReadFromURIFunc = func(loader *openapi3.SwaggerLoader, url *url.URL) ([]byte, error) {
-		if url.String() == "./event.schema.json" {
-			return assets.FS.ReadFile("openapi/event.schema.json")
-		}
-
-		return nil, fmt.Errorf("not found: %s", url.String())
-	}
-
-	oapi, err := loader.LoadSwaggerFromData(spec)
-	if err != nil {
-		panic(err)
-	}
-
-	if err = oapi.Validate(loader.Context); err != nil {
-		panic(err)
-	}
-
-	return oapi
-}
 
 // urlencodedBodyDecoder is required for `kin-openapi` to decode custom urlencoded form.
 func urlencodedBodyDecoder(
