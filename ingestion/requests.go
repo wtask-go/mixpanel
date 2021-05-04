@@ -1,6 +1,7 @@
 package ingestion
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -11,70 +12,59 @@ import (
 )
 
 func (c *client) makeTrackRequest(data *event.Data) (*http.Request, error) {
-	body, err := form.NewValues(
-		data,
-		form.WithVerboseResponse(true),
-	)
+	body, err := makeEventForm(data, form.WithVerboseResponse(true))
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := makeFormURLEncodedPost(c.endpoint.live.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	c.addDefaultHeaders(req)
-
-	return req, nil
+	return makeFormURLEncodedPost(c.endpoint.live.String(), body)
 }
 
 func (c *client) makeTrackDeduplicateRequest(data *event.Data) (*http.Request, error) {
-	body, err := form.NewValues(
-		data,
-		form.WithVerboseResponse(true),
-	)
+	body, err := makeEventForm(data, form.WithVerboseResponse(true))
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := makeFormURLEncodedPost(c.endpoint.deduplicate.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	c.addDefaultHeaders(req)
-
-	return req, nil
+	return makeFormURLEncodedPost(c.endpoint.deduplicate.String(), body)
 }
 
-func (c *client) makeBatchRequest(data []event.Data) (*http.Request, error) {
-	body, err := form.NewBatchValues(
-		data,
-		form.WithVerboseResponse(true),
-	)
+func (c *client) makeBatchRequest(data []*event.Data) (*http.Request, error) {
+	body, err := makeEventBatchForm(data, form.WithVerboseResponse(true))
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := makeFormURLEncodedPost(c.endpoint.batch.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	c.addDefaultHeaders(req)
-
-	return req, nil
+	return makeFormURLEncodedPost(c.endpoint.batch.String(), body)
 }
 
-// addDefaultHeaders adds default request headers.
-func (c *client) addDefaultHeaders(req *http.Request) {
-	req.Header.Add("Accept", "plain/text")
-	req.Header.Add("Accept", "application/json")
-
-	if c.agent != "" {
-		req.Header.Set("User-Agent", c.agent)
+func makeEventForm(obj *event.Data, options ...form.OptionalValue) (*url.Values, error) {
+	if obj == nil {
+		return nil, fmt.Errorf("event object is nil")
 	}
+
+	data, err := json.Marshal(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	return form.NewValues(data, options...)
+}
+
+func makeEventBatchForm(batch []*event.Data, options ...form.OptionalValue) (*url.Values, error) {
+	switch l := len(batch); {
+	case l == 0:
+		return nil, fmt.Errorf("events batch is empty")
+	case l > TrackBatchLimit:
+		return nil, fmt.Errorf("events batch (%d) exceeds limit (%d)", l, TrackBatchLimit)
+	}
+
+	data, err := json.Marshal(batch)
+	if err != nil {
+		return nil, err
+	}
+
+	return form.NewValues(data, options...)
 }
 
 // makeFormURLEncodedPost builds http request to post url-encoded form.
@@ -87,8 +77,8 @@ func makeFormURLEncodedPost(url string, values *url.Values) (*http.Request, erro
 		return nil, err
 	}
 
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Content-Length", fmt.Sprintf("%d", body.Size()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Content-Length", fmt.Sprintf("%d", body.Size()))
 
 	return req, nil
 }

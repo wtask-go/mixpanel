@@ -65,7 +65,7 @@ func Test_Client_openapi_requests(t *testing.T) {
 		},
 	})
 
-	_ = cli.TrackBatch(context.Background(), []event.Data{
+	_ = cli.TrackBatch(context.Background(), []*event.Data{
 		{
 			Event: "outdated-1",
 			Properties: event.Properties{

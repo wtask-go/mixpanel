@@ -23,8 +23,11 @@ type HTTPDoer interface {
 type Client interface {
 	Track(context.Context, *event.Data) error
 	TrackDeduplicate(context.Context, *event.Data) error
-	TrackBatch(context.Context, []event.Data) error
+	TrackBatch(context.Context, []*event.Data) error
 }
+
+// TrackBatchLimit is Mixpanel limitation for events batch.
+const TrackBatchLimit = 50
 
 type client struct {
 	endpoint struct {
@@ -106,18 +109,30 @@ func WithUserAgent(agent string) ClientOption {
 	}
 }
 
+func (c *client) send(ctx context.Context, req *http.Request) error {
+	req = req.WithContext(ctx)
+	req.Header.Set("Accept", "plain/text")
+	req.Header.Add("Accept", "application/json")
+	
+	if c.agent != "" {
+		req.Header.Set("User-Agent", c.agent)
+	}
+
+	resp, err := c.httpc.Do(req)
+	if err != nil {
+		return err
+	}
+
+	return c.parseResponse(resp)
+}
+
 func (c *client) Track(ctx context.Context, data *event.Data) error {
 	req, err := c.makeTrackRequest(data)
 	if err != nil {
 		return err
 	}
 
-	resp, err := c.httpc.Do(req.WithContext(ctx))
-	if err != nil {
-		return err
-	}
-
-	return c.parseResponse(resp)
+	return c.send(ctx, req)
 }
 
 func (c *client) TrackDeduplicate(ctx context.Context, data *event.Data) error {
@@ -126,24 +141,14 @@ func (c *client) TrackDeduplicate(ctx context.Context, data *event.Data) error {
 		return err
 	}
 
-	resp, err := c.httpc.Do(req.WithContext(ctx))
-	if err != nil {
-		return err
-	}
-
-	return c.parseResponse(resp)
+	return c.send(ctx, req)
 }
 
-func (c *client) TrackBatch(ctx context.Context, data []event.Data) error {
+func (c *client) TrackBatch(ctx context.Context, data []*event.Data) error {
 	req, err := c.makeBatchRequest(data)
 	if err != nil {
 		return err
 	}
 
-	resp, err := c.httpc.Do(req.WithContext(ctx))
-	if err != nil {
-		return err
-	}
-
-	return c.parseResponse(resp)
+	return c.send(ctx, req)
 }

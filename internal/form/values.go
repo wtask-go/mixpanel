@@ -1,74 +1,27 @@
 package form
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
-
-	"github.com/wtask-go/mixpanel/errs"
-	"github.com/wtask-go/mixpanel/ingestion/event"
 )
-
-// MaxBatchLength is Mixpanel limitation for events batch.
-const MaxBatchLength = 50
 
 // OptionalValue is intended to pass not mandatory request values.
 type OptionalValue func(*url.Values)
 
-// makeValues builds url.Values with required `data` item.
-func makeValues(data string, optional ...OptionalValue) (*url.Values, error) {
-	if data == "" {
-		return nil, fmt.Errorf("%w: data is empty", errs.ErrInvalidArgument)
+// NewValues builds url.Values with required `data` item.
+func NewValues(data []byte, optional ...OptionalValue) (*url.Values, error) {
+	if len(data) == 0 {
+		return nil, fmt.Errorf("data is empty")
 	}
 
 	values := &url.Values{}
-	values.Set("data", data)
+	values.Set("data", string(data))
 
 	for _, value := range optional {
 		value(values)
 	}
 
 	return values, nil
-}
-
-// NewValues builds form values required to track single event.
-func NewValues(data *event.Data, optional ...OptionalValue) (*url.Values, error) {
-	if data == nil {
-		return nil, fmt.Errorf("%w: event data is nil", errs.ErrInvalidArgument)
-	}
-
-	encoded, err := json.Marshal(data)
-	if err != nil {
-		return nil, fmt.Errorf("event data marshaling: %w", err)
-	}
-
-	return makeValues(string(encoded), optional...)
-}
-
-// NewBatchValues builds form values required to track batch events.
-func NewBatchValues(data []event.Data, optional ...OptionalValue) (*url.Values, error) {
-	switch l := len(data); {
-	case l == 0:
-		return nil, fmt.Errorf("%w: events batch empty", errs.ErrInvalidArgument)
-	case l > MaxBatchLength:
-		return nil, fmt.Errorf("%w: events batch exceeds %d items ", errs.ErrInvalidArgument, MaxBatchLength)
-	}
-
-	encoded, err := json.Marshal(data)
-	if err != nil {
-		return nil, fmt.Errorf("events batch marshaling: %w", err)
-	}
-
-	optional = append(
-		optional,
-		// are not supported for batch
-		WithIPAsDistinctID(false),
-		WithRedirectResponse(""),
-		WithImageResponse(false),
-		WithJavascriptCallback(""),
-	)
-
-	return makeValues(string(encoded), optional...)
 }
 
 // WithVerboseResponse builds option to pass verbose flag.
