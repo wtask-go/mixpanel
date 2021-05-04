@@ -1,0 +1,105 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "title": "Mixpanel user profile engage schema",
+    "description": "See details here https://developer.mixpanel.com/reference/user-profiles",
+    "examples": [],
+    "required": [
+        "$token",
+        "$distinct_id"
+    ],
+    "properties": {
+        "$token": {
+            "type": "string",
+            "title": "Project token",
+            "description": "The Mixpanel token associated with your project.",
+            "examples": [
+                "6972694d809c7390676a138834f8c890"
+            ]
+        },
+        "$distinct_id": {
+            "type": "string",
+            "title": "Distinct ID",
+            "description": "The value of distinct_id will be treated as a string, and used to uniquely identify a user associated with your events.",
+            "examples": [
+                "john.doe@spotify.com"
+            ]
+        },
+        "$set": {
+            "type": "object",
+            "minProperties": 1,
+            "title": "Profile properties names with values to set",
+            "properties": {},
+            "additionalProperties": true
+        },
+        "$set_once": {
+            "type": "object",
+            "minProperties": 1,
+            "title": "Profile properties names with values to set once (without overwriting)",
+            "properties": {},
+            "additionalProperties": true
+        },
+        "$add": {
+            "type": "object",
+            "minProperties": 1,
+            "title": "Profile numeric properties names with values to add",
+            "properties": {},
+            "additionalProperties": true
+        },
+        "$append": {
+            "type": "object",
+            "minProperties": 1,
+            "title": "Profile properties which represent lists with values to append",
+            "properties": {},
+            "additionalProperties": true
+        },
+        "$remove": {
+            "type": "object",
+            "minProperties": 1,
+            "title": "Profile properties which represent lists with values to remove from",
+            "properties": {},
+            "additionalProperties": true
+        },
+        "$unset": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "string"
+            },
+            "title": "Profile properties names to unset completely"
+        }
+    },
+    "oneOf": [
+        {
+            "required": [
+                "$set"
+            ]
+        },
+        {
+            "required": [
+                "$set_once"
+            ]
+        },
+        {
+            "required": [
+                "$add"
+            ]
+        },
+        {
+            "required": [
+                "$append"
+            ]
+        },
+        {
+            "required": [
+                "$remove"
+            ]
+        },
+        {
+            "required": [
+                "$unset"
+            ]
+        }
+    ],
+    "additionalProperties": false
+}

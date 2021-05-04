@@ -12,6 +12,7 @@ import (
 
 	"github.com/wtask-go/mixpanel/errs"
 	"github.com/wtask-go/mixpanel/ingestion/event"
+	"github.com/wtask-go/mixpanel/ingestion/profile"
 )
 
 // HTTPDoer represent HTTP client interface only required for this package.
@@ -23,14 +24,30 @@ type HTTPDoer interface {
 type Client interface {
 	Track(context.Context, *event.Data) error
 	TrackDeduplicate(context.Context, *event.Data) error
-	TrackBatch(context.Context, []event.Data) error
+	TrackBatch(context.Context, []*event.Data) error
+	Engage(context.Context, profile.Mutator) error
+	EngageBatch(context.Context, []profile.Mutator) error
 }
+
+// TrackBatchLimit is Mixpanel limitation for events batch.
+const TrackBatchLimit = 50
 
 type client struct {
 	endpoint struct {
-		live        *url.URL
-		deduplicate *url.URL
-		batch       *url.URL
+		track struct {
+			live        *url.URL
+			deduplicate *url.URL
+			batch       *url.URL
+		}
+		engage struct {
+			set     *url.URL
+			setOnce *url.URL
+			add     *url.URL
+			append  *url.URL
+			remove  *url.URL
+			unset   *url.URL
+			batch   *url.URL
+		}
 	}
 	httpc HTTPDoer
 	agent string
@@ -51,19 +68,23 @@ func NewClient(serverURL string, options ...ClientOption) (Client, error) {
 		return nil, fmt.Errorf("parse server URL: %w", err)
 	}
 
+	serverRef := func(path, fragment string) *url.URL {
+		return server.ResolveReference(&url.URL{Path: path, Fragment: fragment})
+	}
+
 	cli := &client{}
-	cli.endpoint.live = server.ResolveReference(&url.URL{
-		Path:     "/track",
-		Fragment: "live-event",
-	})
-	cli.endpoint.deduplicate = server.ResolveReference(&url.URL{
-		Path:     "/track",
-		Fragment: "live-event-deduplicate",
-	})
-	cli.endpoint.batch = server.ResolveReference(&url.URL{
-		Path:     "/track",
-		Fragment: "past-events-batch",
-	})
+	cli.endpoint.track.live = serverRef("/track", "live-event")
+	cli.endpoint.track.deduplicate = serverRef("/track", "live-event-deduplicate")
+	cli.endpoint.track.batch = serverRef("/track", "past-events-batch")
+
+	cli.endpoint.engage.set = serverRef("/engage", "profile-set")
+	cli.endpoint.engage.setOnce = serverRef("/engage", "profile-set-once")
+	cli.endpoint.engage.add = serverRef("/engage", "profile-numerical-add")
+	cli.endpoint.engage.append = serverRef("/engage", "profile-list-append")
+	cli.endpoint.engage.remove = serverRef("/engage", "profile-list-remove")
+	cli.endpoint.engage.unset = serverRef("/engage", "profile-unset")
+	cli.endpoint.engage.batch = serverRef("/engage", "profile-batch-update")
+
 	cli.httpc = &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -106,18 +127,30 @@ func WithUserAgent(agent string) ClientOption {
 	}
 }
 
+func (c *client) send(ctx context.Context, req *http.Request) error {
+	req = req.WithContext(ctx)
+	req.Header.Set("Accept", "plain/text")
+	req.Header.Add("Accept", "application/json")
+
+	if c.agent != "" {
+		req.Header.Set("User-Agent", c.agent)
+	}
+
+	resp, err := c.httpc.Do(req)
+	if err != nil {
+		return err
+	}
+
+	return c.parseResponse(resp)
+}
+
 func (c *client) Track(ctx context.Context, data *event.Data) error {
 	req, err := c.makeTrackRequest(data)
 	if err != nil {
 		return err
 	}
 
-	resp, err := c.httpc.Do(req.WithContext(ctx))
-	if err != nil {
-		return err
-	}
-
-	return c.parseResponse(resp)
+	return c.send(ctx, req)
 }
 
 func (c *client) TrackDeduplicate(ctx context.Context, data *event.Data) error {
@@ -126,24 +159,32 @@ func (c *client) TrackDeduplicate(ctx context.Context, data *event.Data) error {
 		return err
 	}
 
-	resp, err := c.httpc.Do(req.WithContext(ctx))
-	if err != nil {
-		return err
-	}
-
-	return c.parseResponse(resp)
+	return c.send(ctx, req)
 }
 
-func (c *client) TrackBatch(ctx context.Context, data []event.Data) error {
-	req, err := c.makeBatchRequest(data)
+func (c *client) TrackBatch(ctx context.Context, data []*event.Data) error {
+	req, err := c.makeTrackBatchRequest(data)
 	if err != nil {
 		return err
 	}
 
-	resp, err := c.httpc.Do(req.WithContext(ctx))
+	return c.send(ctx, req)
+}
+
+func (c *client) Engage(ctx context.Context, action profile.Mutator) error {
+	req, err := c.makeEngageRequest(action)
 	if err != nil {
 		return err
 	}
 
-	return c.parseResponse(resp)
+	return c.send(ctx, req)
+}
+
+func (c *client) EngageBatch(ctx context.Context, batch []profile.Mutator) error {
+	req, err := c.makeEngageBatchRequest(batch)
+	if err != nil {
+		return nil
+	}
+
+	return c.send(ctx, req)
 }

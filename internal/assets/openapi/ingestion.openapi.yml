@@ -39,6 +39,63 @@ tags:
       If no events are valid, then a `0` status will be returned.
     externalDocs:
       url: https://developer.mixpanel.com/reference/events#track-events-in-batch
+  - name: Set Property
+    description: |
+      Takes a JSON object containing names and values of profile properties. 
+      If the profile does not exist, it creates it with these properties.
+      If it does exist, it sets the properties to these values, overwriting existing values.
+    externalDocs:
+      url: https://developer.mixpanel.com/reference/user-profiles#profile-set
+  - name: Set Property Once
+    description: |
+      Works just like "Set Property", except it will not overwrite existing property values.
+      This is useful for properties like "First login date".
+    externalDocs:
+      url: https://developer.mixpanel.com/reference/user-profiles#profile-set-property-once
+  - name: Increment Numerical Property
+    description: |
+      Takes a JSON object containing keys and numerical values.
+      Method will increment the value of a user profile property.
+      When processed, the property values are added to the existing values of the properties on the profile.
+      If the property is not present on the profile, the value will be added to 0.
+      It is possible to decrement by calling "$add" with negative values.
+      This is useful for maintaining the values of properties like "Number of Logins" or "Files Uploaded".
+    externalDocs:
+      url: https://developer.mixpanel.com/reference/user-profiles#profile-numerical-add
+  - name: Append to List Property
+    description: |
+      Takes a JSON object containing keys and values,
+      and appends each to a list associated with the corresponding property name.
+      Appending to a property that doesn't exist will result in assigning a list with one element to that property.
+    externalDocs:
+      url: https://developer.mixpanel.com/reference/user-profiles#profile-append-to-list-property
+  - name: Remove from List Property
+    description: |
+      Takes a JSON object containing keys and values.
+      The value in the request is removed from the existing list on the user profile.
+      If it does not exist, no updates are made.
+    externalDocs:
+      url: https://developer.mixpanel.com/reference/user-profiles#profile-remove-from-list-property
+  - name: Delete Property
+    description: |
+      Takes a JSON list of string property names, and permanently removes the properties and their values from a profile.
+    externalDocs:
+      url: https://developer.mixpanel.com/reference/user-profiles#profile-delete-property
+  - name: Update Multiple Profiles
+    description: |
+      Send a batch of profile updates. Instead of sending a single JSON object as the data query parameter,
+      send a JSON list of objects as the data parameter of an application/x-www-form-urlencoded POST or GET request body.
+    externalDocs:
+      url: https://developer.mixpanel.com/reference/user-profiles#profile-batch-update
+  - name: Delete Profile
+    description: |
+      Permanently delete the profile from Mixpanel, along with all of its properties.
+      The value is ignored - the profile is determined by the $distinct_id from the request itself.
+      If you have duplicate profiles, use property $ignore_alias set to true 
+      so that you don't delete the original profile when trying to delete the duplicate
+      (as they pass in the alias as the distinct_id).
+    externalDocs:
+      url: https://developer.mixpanel.com/reference/user-profiles#delete-profile
 
 components:
   schemas:
@@ -49,6 +106,10 @@ components:
         A JSON object as a string representing the event being tracked.
         Event is the name of the event being tracked and is a required property.
         Check Mixpanel Event Schema.
+    engage-object:
+      contentType: application/json
+      $ref: "./engage.schema.json"
+      description: A JSON object representing an action available for the user profile.
 
     event-form:
       title: Track Event form data
@@ -97,6 +158,35 @@ components:
             If present, Mixpanel will return a `content-type: text/javascript` with a body that calls a function
             by value provided. This is useful for creating local callbacks to a successful track call in JavaScript.
 
+    engage-form:
+      title: User profile action
+      type: object
+      required:
+        - "data"
+      properties:
+        data:
+          $ref: "#/components/schemas/engage-object"
+        verbose:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 1
+          description: |
+            If present and equal to 1, Mixpanel will respond with a JSON Object describing the success
+            or failure of the tracking call.
+            The returned object will have two keys: `status`, with the value 1 on success and 0 on failure, 
+            and `error`, with a string-valued error message if the request wasn't successful.
+        redirect:
+          type: string
+          description: |
+            If present, Mixpanel will serve a redirect to the given url as a response to the request.
+            This is useful to add link tracking in notifications.
+        callback:
+          type: string
+          description: |
+            If present, Mixpanel will return a `content-type: text/javascript` with a body that calls a function
+            by value provided. This is useful for creating local callbacks to a successful track call in JavaScript.
+
     response-status-flag:
       title: Response status value
       type: integer
@@ -129,6 +219,29 @@ components:
           type: string
           description: Response error description.
 
+  responses:
+    "200":
+      description: OK
+      content:
+        text/plain:
+          schema:
+            $ref: "#/components/schemas/response-status-flag"
+        application/json:
+          schema:
+            $ref: "#/components/schemas/verbose-response"
+    "401":
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error-response"
+    "403":
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error-response"
+
 paths:
   /track#live-event:
     post:
@@ -144,26 +257,11 @@ paths:
               $ref: "#/components/schemas/event-form"
       responses:
         "200":
-          description: OK
-          content:
-            text/plain:
-              schema:
-                $ref: "#/components/schemas/response-status-flag"
-            application/json:
-              schema:
-                $ref: "#/components/schemas/verbose-response"
+          $ref: "#/components/responses/200"
         "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error-response"
+          $ref: "#/components/responses/401"
         "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error-response"
+          $ref: "#/components/responses/403"
 
   /track#live-event-deduplicate:
     post:
@@ -179,26 +277,11 @@ paths:
               $ref: "#/components/schemas/event-form"
       responses:
         "200":
-          description: OK
-          content:
-            text/plain:
-              schema:
-                $ref: "#/components/schemas/response-status-flag"
-            application/json:
-              schema:
-                $ref: "#/components/schemas/verbose-response"
+          $ref: "#/components/responses/200"
         "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error-response"
+          $ref: "#/components/responses/401"
         "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error-response"
+          $ref: "#/components/responses/403"
 
   /track#past-events-batch:
     post:
@@ -233,23 +316,207 @@ paths:
                     with a string-valued error message if the request wasn't successful.
       responses:
         "200":
-          description: OK
-          content:
-            text/plain:
-              schema:
-                $ref: "#/components/schemas/response-status-flag"
-            application/json:
-              schema:
-                $ref: "#/components/schemas/verbose-response"
+          $ref: "#/components/responses/200"
         "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error-response"
+          $ref: "#/components/responses/401"
         "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error-response"
+          $ref: "#/components/responses/403"
+
+  /engage#profile-set:
+    post:
+      summary: Set profile property
+      tags:
+        - Set Property
+      operationId: EngageProfileSet
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/engage-form"
+              type: "object"
+              required:
+                - "$token"
+                - "$distinct_id"
+                - "$set"
+      responses:
+        "200":
+          $ref: "#/components/responses/200"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+
+  /engage#profile-set-once:
+    post:
+      summary: Set profile property only once
+      tags:
+        - Set Property Once
+      operationId: EngageProfileSetOnce
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/engage-form"
+              type: "object"
+              required:
+                - "$token"
+                - "$distinct_id"
+                - "$set_once"
+      responses:
+        "200":
+          $ref: "#/components/responses/200"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+
+  /engage#profile-numerical-add:
+    post:
+      summary: Add value to profile numerical property
+      tags:
+        - Increment Numerical Property
+      operationId: EngageProfileAdd
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/engage-form"
+              type: "object"
+              required:
+                - "$token"
+                - "$distinct_id"
+                - "$add"
+      responses:
+        "200":
+          $ref: "#/components/responses/200"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+
+  /engage#profile-list-append:
+    post:
+      summary: Add value to profile list property
+      tags:
+        - Append to List Property
+      operationId: EngageProfileAppendToList
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/engage-form"
+              type: "object"
+              required:
+                - "$token"
+                - "$distinct_id"
+                - "$append"
+      responses:
+        "200":
+          $ref: "#/components/responses/200"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+
+  /engage#profile-list-remove:
+    post:
+      summary: Remove item from profile list property
+      tags:
+        - Remove from List Property
+      operationId: EngageProfileRemoveFromList
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/engage-form"
+              type: "object"
+              required:
+                - "$token"
+                - "$distinct_id"
+                - "$remove"
+      responses:
+        "200":
+          $ref: "#/components/responses/200"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+
+  /engage#profile-unset:
+    post:
+      summary: Delete profile property
+      tags:
+        - Delete Property
+      operationId: EngageProfileUnset
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/engage-form"
+              type: "object"
+              required:
+                - "$token"
+                - "$distinct_id"
+                - "$unset"
+      responses:
+        "200":
+          $ref: "#/components/responses/200"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+
+  /engage#profile-batch-update:
+    post:
+      summary: Send a batch of profile updates.
+      tags:
+        - Update Multiple Profiles
+      operationId: EngageMultipleProfiles
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              title: Engage multiple profiles update
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/engage-object"
+                  maxItems: 50
+                verbose:
+                  type: integer
+                  format: int32
+                  minimum: 0
+                  maximum: 1
+                  description: |
+                    If present and equal to 1, Mixpanel will respond with a JSON Object describing the success
+                    or failure of the tracking call.
+                    The returned object will have two keys: `status`, with the value 1 on success and 0 on failure, 
+                    and `error`, with a string-valued error message if the request wasn't successful.
+                redirect:
+                  type: string
+                  description: |
+                    If present, Mixpanel will serve a redirect to the given url as a response to the request.
+                    This is useful to add link tracking in notifications.
+                callback:
+                  type: string
+                  description: |
+                    If present, Mixpanel will return a `content-type: text/javascript` with a body that calls a function
+                    by value provided. This is useful for creating local callbacks to a successful track call in JavaScript.
+      responses:
+        "200":
+          $ref: "#/components/responses/200"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
