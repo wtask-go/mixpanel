@@ -108,7 +108,7 @@ func NewClient(serverURL string, options ...ClientOption) (Client, error) {
 func WithHTTPDoer(doer HTTPDoer) ClientOption {
 	return func(c *client) error {
 		if doer == nil {
-			return fmt.Errorf("HTTP doer is nil")
+			return fmt.Errorf("HTTPDoer is nil")
 		}
 
 		c.httpc = doer
