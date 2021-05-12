@@ -14,7 +14,7 @@ import (
 
 func (*client) parseResponse(resp *http.Response) error {
 	if resp == nil {
-		return fmt.Errorf("%w: http response is nil", errs.ErrInvalidArgument)
+		return fmt.Errorf("HTTP response is nil")
 	}
 
 	var (
@@ -55,7 +55,7 @@ func parsePlainText200(body io.ReadCloser) error {
 
 	data, err := ioutil.ReadAll(body)
 	if err != nil {
-		return fmt.Errorf("%w: read text/plain: %s", errs.ErrInvalidArgument, err)
+		return fmt.Errorf("parse text/plain: %s", err)
 	}
 
 	// API declared integer scheme for response, but as we known OpenAPI use float64
@@ -78,7 +78,7 @@ func parseJSON200(body io.ReadCloser) error {
 
 	data, err := ioutil.ReadAll(body)
 	if err != nil {
-		return fmt.Errorf("%w: read application/json: %s", errs.ErrInvalidArgument, err)
+		return fmt.Errorf("parse application/json: %s", err)
 	}
 
 	content := struct {
@@ -108,7 +108,7 @@ func parseJSONError(body io.ReadCloser) error {
 
 	data, err := ioutil.ReadAll(body)
 	if err != nil {
-		return fmt.Errorf("%w: read application/json error: %s", errs.ErrInvalidArgument, err)
+		return fmt.Errorf("parse application/json error: %s", err)
 	}
 
 	content := struct {

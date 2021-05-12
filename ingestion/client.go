@@ -10,7 +10,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/wtask-go/mixpanel/errs"
 	"github.com/wtask-go/mixpanel/ingestion/event"
 	"github.com/wtask-go/mixpanel/ingestion/profile"
 )
@@ -60,7 +59,7 @@ type ClientOption func(*client) error
 func NewClient(serverURL string, options ...ClientOption) (Client, error) {
 	serverURL = strings.TrimRight(serverURL, "/")
 	if serverURL == "" {
-		return nil, fmt.Errorf("%w: insufficient or empty server URL", errs.ErrInvalidArgument)
+		return nil, fmt.Errorf("bad or empty server URL")
 	}
 
 	server, err := url.Parse(serverURL)
@@ -109,7 +108,7 @@ func NewClient(serverURL string, options ...ClientOption) (Client, error) {
 func WithHTTPDoer(doer HTTPDoer) ClientOption {
 	return func(c *client) error {
 		if doer == nil {
-			return fmt.Errorf("%w: http doer is nil", errs.ErrInvalidArgument)
+			return fmt.Errorf("HTTP doer is nil")
 		}
 
 		c.httpc = doer
