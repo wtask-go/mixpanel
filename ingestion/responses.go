@@ -8,13 +8,11 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-
-	"github.com/wtask-go/mixpanel/errs"
 )
 
 func (*client) parseResponse(resp *http.Response) error {
 	if resp == nil {
-		return fmt.Errorf("%w: http response is nil", errs.ErrInvalidArgument)
+		return fmt.Errorf("HTTP response is nil")
 	}
 
 	var (
@@ -24,13 +22,7 @@ func (*client) parseResponse(resp *http.Response) error {
 
 	switch {
 	default:
-		err = fmt.Errorf(
-			"%w: %d %s, %s",
-			errs.ErrResponseInvalidContent,
-			resp.StatusCode,
-			resp.Status,
-			contentType,
-		)
+		err = fmt.Errorf("unexpected response: %d %s, %s", resp.StatusCode, resp.Status, contentType)
 	case resp.StatusCode == http.StatusOK && strings.Contains(contentType, "text/plain"):
 		err = parsePlainText200(resp.Body)
 	case resp.StatusCode == http.StatusOK && strings.Contains(contentType, "application/json"):
@@ -38,11 +30,6 @@ func (*client) parseResponse(resp *http.Response) error {
 	case (resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden) &&
 		strings.Contains(contentType, "application/json"):
 		err = parseJSONError(resp.Body)
-		if err == nil {
-			err = errs.ErrUnknown
-		}
-
-		err = fmt.Errorf("%w (%d %s)", err, resp.StatusCode, resp.Status)
 	}
 
 	return err
@@ -55,17 +42,17 @@ func parsePlainText200(body io.ReadCloser) error {
 
 	data, err := ioutil.ReadAll(body)
 	if err != nil {
-		return fmt.Errorf("%w: read text/plain: %s", errs.ErrInvalidArgument, err)
+		return fmt.Errorf("read text/plain OK response: %s", err)
 	}
 
 	// API declared integer scheme for response, but as we known OpenAPI use float64
-	status, err := strconv.ParseFloat(strings.TrimSpace(string(data)), 64)
+	response, err := strconv.ParseFloat(strings.TrimSpace(string(data)), 64)
 	if err != nil {
-		return fmt.Errorf("%w: convert text/plain: %s", errs.ErrResponseInvalidContent, err)
+		return fmt.Errorf("parse text/plain OK response: %s", err)
 	}
 
-	if status == 0 {
-		return fmt.Errorf("%w: request failed", errs.ErrResponseInvalidData)
+	if response == 0 {
+		return fmt.Errorf("request failed")
 	}
 
 	return nil
@@ -78,23 +65,23 @@ func parseJSON200(body io.ReadCloser) error {
 
 	data, err := ioutil.ReadAll(body)
 	if err != nil {
-		return fmt.Errorf("%w: read application/json: %s", errs.ErrInvalidArgument, err)
+		return fmt.Errorf("read application/json OK response: %s", err)
 	}
 
-	content := struct {
+	response := struct {
 		Status int    `json:"status"`
 		Error  string `json:"error"`
 	}{}
-	if err := json.Unmarshal(data, &content); err != nil {
-		return fmt.Errorf("%w: unmarshal json: %s", errs.ErrResponseInvalidContent, err)
+	if err := json.Unmarshal(data, &response); err != nil {
+		return fmt.Errorf("unmarshal application/json OK response: %s", err)
 	}
 
-	if content.Status == 0 {
-		if content.Error == "" {
-			content.Error = "details not provided"
+	if response.Status == 0 {
+		if response.Error == "" {
+			response.Error = "details not provided"
 		}
 
-		return fmt.Errorf("%w: request failed: %s", errs.ErrResponseInvalidData, content.Error)
+		return fmt.Errorf("request failed: %s", response.Error)
 	}
 
 	return nil
@@ -108,7 +95,7 @@ func parseJSONError(body io.ReadCloser) error {
 
 	data, err := ioutil.ReadAll(body)
 	if err != nil {
-		return fmt.Errorf("%w: read application/json error: %s", errs.ErrInvalidArgument, err)
+		return fmt.Errorf("read application/json error response: %s", err)
 	}
 
 	content := struct {
@@ -116,12 +103,12 @@ func parseJSONError(body io.ReadCloser) error {
 		Error  string `json:"error"`
 	}{}
 	if err := json.Unmarshal(data, &content); err != nil {
-		return fmt.Errorf("%w: unmarshal json error: %s", errs.ErrResponseInvalidContent, err)
+		return fmt.Errorf("unmarshal application/json error response: %s", err)
 	}
 
 	if content.Error == "" {
 		content.Error = "error details not provided"
 	}
 
-	return fmt.Errorf("%w: %s", errs.ErrRequestFailed, content.Error)
+	return fmt.Errorf("request failed: %s", content.Error)
 }
