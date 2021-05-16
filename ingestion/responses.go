@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-
-	"github.com/wtask-go/mixpanel/errs"
 )
 
 func (*client) parseResponse(resp *http.Response) error {
@@ -24,13 +22,7 @@ func (*client) parseResponse(resp *http.Response) error {
 
 	switch {
 	default:
-		err = fmt.Errorf(
-			"%w: %d %s, %s",
-			errs.ErrResponseInvalidContent,
-			resp.StatusCode,
-			resp.Status,
-			contentType,
-		)
+		err = fmt.Errorf("unexpected response: %d %s, %s", resp.StatusCode, resp.Status, contentType)
 	case resp.StatusCode == http.StatusOK && strings.Contains(contentType, "text/plain"):
 		err = parsePlainText200(resp.Body)
 	case resp.StatusCode == http.StatusOK && strings.Contains(contentType, "application/json"):
@@ -38,11 +30,6 @@ func (*client) parseResponse(resp *http.Response) error {
 	case (resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden) &&
 		strings.Contains(contentType, "application/json"):
 		err = parseJSONError(resp.Body)
-		if err == nil {
-			err = errs.ErrUnknown
-		}
-
-		err = fmt.Errorf("%w (%d %s)", err, resp.StatusCode, resp.Status)
 	}
 
 	return err
@@ -55,13 +42,13 @@ func parsePlainText200(body io.ReadCloser) error {
 
 	data, err := ioutil.ReadAll(body)
 	if err != nil {
-		return fmt.Errorf("parse text/plain: %s", err)
+		return fmt.Errorf("read text/plain OK response: %s", err)
 	}
 
 	// API declared integer scheme for response, but as we known OpenAPI use float64
 	response, err := strconv.ParseFloat(strings.TrimSpace(string(data)), 64)
 	if err != nil {
-		return fmt.Errorf("%w: convert text/plain: %s", errs.ErrResponseInvalidContent, err)
+		return fmt.Errorf("parse text/plain OK response: %s", err)
 	}
 
 	if response == 0 {
@@ -78,7 +65,7 @@ func parseJSON200(body io.ReadCloser) error {
 
 	data, err := ioutil.ReadAll(body)
 	if err != nil {
-		return fmt.Errorf("parse application/json: %s", err)
+		return fmt.Errorf("read application/json OK response: %s", err)
 	}
 
 	response := struct {
@@ -86,7 +73,7 @@ func parseJSON200(body io.ReadCloser) error {
 		Error  string `json:"error"`
 	}{}
 	if err := json.Unmarshal(data, &response); err != nil {
-		return fmt.Errorf("%w: unmarshal json: %s", errs.ErrResponseInvalidContent, err)
+		return fmt.Errorf("unmarshal application/json OK response: %s", err)
 	}
 
 	if response.Status == 0 {
@@ -108,7 +95,7 @@ func parseJSONError(body io.ReadCloser) error {
 
 	data, err := ioutil.ReadAll(body)
 	if err != nil {
-		return fmt.Errorf("parse application/json error: %s", err)
+		return fmt.Errorf("read application/json error response: %s", err)
 	}
 
 	content := struct {
@@ -116,12 +103,12 @@ func parseJSONError(body io.ReadCloser) error {
 		Error  string `json:"error"`
 	}{}
 	if err := json.Unmarshal(data, &content); err != nil {
-		return fmt.Errorf("%w: unmarshal json error: %s", errs.ErrResponseInvalidContent, err)
+		return fmt.Errorf("unmarshal application/json error response: %s", err)
 	}
 
 	if content.Error == "" {
 		content.Error = "error details not provided"
 	}
 
-	return fmt.Errorf("%w: %s", errs.ErrRequestFailed, content.Error)
+	return fmt.Errorf("request failed: %s", content.Error)
 }
