@@ -9,7 +9,7 @@ import (
 	"net/url"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/santhosh-tekuri/jsonschema/v3"
+	jsonschema "github.com/santhosh-tekuri/jsonschema/v3"
 )
 
 // FS represents filesystem with embedded files
