@@ -40,8 +40,8 @@ jobs:
           # the token is used for fetching patch of a pull request to show only new issues
           # github-token: # default is ${{ github.token }}
           # if set to true and the action runs on a pull request - the action outputs only newly found issues
-          # only-new-issues: 
-          # if set to true and the action runs on a pull request - the action outputs only newly found issues
+          only-new-issues: false
+          # if set to true then action uses pre-installed Go
           skip-go-installation: true
           # if set to true then the action don't cache or restore ~/go/pkg.
           skip-pkg-cache: true
