@@ -2,6 +2,8 @@
 
 Mixpanel API client for Go
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/wtask-go/mixpanel.svg)](https://pkg.go.dev/github.com/wtask-go/mixpanel)
+
 ## Requirements
 
 * Go 1.16 and above. This module uses `embed` package introduced for Go 1.16
